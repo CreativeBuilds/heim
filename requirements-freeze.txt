@@ -45,7 +45,6 @@ dill==0.3.5.1
 dm-tree==0.1.8
 docker-pycreds==0.4.0
 einops==0.6.1
-etils==1.4.1
 exceptiongroup==1.1.2
 executing==1.2.0
 filelock==3.12.2
