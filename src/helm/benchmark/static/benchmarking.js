@@ -213,8 +213,7 @@ $(function () {
       metricGroup.metrics.forEach((metric) => {
         // This function is supposed to return per-instance metrics, so exclude
         // metrics that mentions perturbations.
-        // Temporary workaround: when split is "__all__", it matches all splits
-        if (metric.perturbation_name && metric.perturbation_name !== "__all__") {
+        if (metric.perturbation_name && metric.perturbation_name != "__all__") {
           return;
         }
         names.push(substitute(metric.name, scenarioGroup.environment));
@@ -576,7 +575,7 @@ $(function () {
           \{trial {{prediction.train_trial_index~}} \}
         {{~/if~}}
       </a></strong>:
-      <span class="prediction-text">{{{predictedText}}}</span>
+      {{{outputHTMLElement}}}
     </div>
     <div class="request" style="display: none">Loading...</div>
   `);
@@ -603,7 +602,6 @@ $(function () {
       if (!runSpec.groups.includes(runGroup.name)) {
         return;
       }
-
       getMetricNames(runGroup).forEach((name) =>{
         if (!metricNames.includes(name)) {
           metricNames.push(name);
@@ -631,31 +629,34 @@ $(function () {
       }
 
       // Render the prediction
-      // TODO: Escape the HTML in predictedText properly
-      let predictedText = prediction.predicted_text.trim();
-      if (method === "multiple_choice_joint") {
+      let outputHTMLElement = prediction.predicted_text.trim();
+      if (prediction.base64_images.length > 0) {
+        outputHTMLElement = ''
+        prediction.base64_images.forEach(image => outputHTMLElement += `<br><img src="data:image;base64,${image}">`);
+      } else if (method === "multiple_choice_joint") {
         if (prediction.mapped_output !== undefined) {
-          predictedText = truncateMiddle(prediction.mapped_output.trim(), 30);
+          outputHTMLElement = truncateMiddle(prediction.mapped_output.trim(), 30);
         } else {
-          predictedText = truncateMiddle(predictedText, 30) + '<span style="color: gray"> (unmapped)</span>';
+          outputHTMLElement = truncateMiddle(outputHTMLElement, 30) + '<span style="color: gray"> (unmapped)</span>';
         }
       } else if (method.startsWith('multiple_choice_separate_')) {
         // For adapter method = separate, prediction starts with the prompt, strip it out
         if (prediction.truncated_predicted_text !== undefined) {
-          predictedText = '<span style="color: lightgray">...</span> ' + truncateMiddle(prediction.truncated_predicted_text.trim(), 30);
+          outputHTMLElement = '<span style="color: lightgray">...</span> ' + truncateMiddle(prediction.truncated_predicted_text.trim(), 30);
         } else {
-          console.warn("Prompt was not stripped from predicted text", predictedText);
-          predictedText = truncateMiddle(predictedText, 30);
+          console.warn("Prompt was not stripped from predicted text", outputHTMLElement);
+          outputHTMLElement = truncateMiddle(outputHTMLElement, 30);
         }
       } else if (method === 'language_modeling') {
         // For language modeling, first token is just padding, so strip it out
         if (prediction.truncated_predicted_text !== undefined) {
-          predictedText = truncateMiddle(prediction.truncated_predicted_text.trim(), 30);
+          outputHTMLElement = truncateMiddle(prediction.truncated_predicted_text.trim(), 30);
         } else {
-          console.warn("First token was not stripped from predicted text", predictedText);
-          predictedText = truncateMiddle(predictedText, 30)
+          console.warn("First token was not stripped from predicted text", outputHTMLElement);
+          outputHTMLElement = truncateMiddle(outputHTMLElement, 30)
         }
       }
+
       const metrics = [];
       metricNames.forEach((metricName) => {
         const metricValue = prediction.stats[metricName];
@@ -668,7 +669,7 @@ $(function () {
       $instance.append(predictionTemplate({
         runDisplayName,
         prediction,
-        predictedText,
+        outputHTMLElement,
         numTrainTrials,
         metrics,
       }));
@@ -865,7 +866,7 @@ $(function () {
     // 2) Scenario-level groups (e.g., mmlu)
     const topGroups = schema.run_groups.filter((group) => {
       // Must have subgroups
-      return group.subgroups && ['Core scenarios', 'Targeted evaluations'].includes(group.category);
+      return group.subgroups && ['Scenarios for specific aspects'].includes(group.category);
     });
 
     const scenarioGroupNames = {};
@@ -962,71 +963,42 @@ $(function () {
     return $result;
   }
 
-  function helmLogo() {
-    return $('<a>', {href: rootUrl()}).append($('<img>', {src: 'images/helm-logo.png', width: '500px', class: 'mx-auto d-block'}));
-  };
-
   function button(text, href) {
     return $('<a>', {href, class: 'main-link btn btn-lg m-5 px-5'}).append(text);
   }
 
+  function heimLogo() {
+    return $('<div>', {class: 'text-center'}).append($('<img>', {src: 'images/heim-logo.png', class: 'heim-logo mx-auto d-block'}));
+  }
+
+  function heimFig() {
+    return $('<div>', {class: 'text-center'}).append($('<img>', {src: 'images/heim-main.png', class: 'heim-main-fig'}))
+  }
+
   function renderMainPage() {
     const $result = $('<div>', {class: 'row'});
+    $result.append($('<div>', {class: 'col-sm-12'}).append(heimLogo()));
+    $result.append($('<h1 class="mx-auto d-block">Holistic Evaluation of Text-To-Image Models</h1>'));
 
-    $result.append($('<div>', {class: 'col-sm-12'}).append(helmLogo()));
-
-    const $blog = button('Blog post', 'https://crfm.stanford.edu/2022/11/17/helm.html');
-    const $paper = button('Paper', 'https://arxiv.org/pdf/2211.09110.pdf');
+    // TODO: update with the HEIM arxiv link
+    const $paper = button('Paper', 'https://arxiv.org/abs/2211.09110');
     const $code = button('GitHub', 'https://github.com/stanford-crfm/helm');
-    $result.append($('<div>', {class: 'col-sm-12'}).append($('<div>', {class: 'text-center'}).append([$blog, $paper, $code])));
+    $result.append($('<div>', {class: 'col-sm-12'}).append($('<div>', {class: 'text-center'}).append([$paper,$code])));
 
     const $description = $('<div>', {class: 'col-sm-8'}).append([
-      'A language model takes in text and produces text:',
-      $('<div>', {class: 'text-center'}).append($('<img>', {src: 'images/language-model-helm.png', width: '600px', style: 'width: 600px; margin-left: 130px'})),
-      'Despite their simplicity, language models are increasingly functioning as the foundation for almost all language technologies from question answering to summarization.',
-      ' ',
-      'But their immense capabilities and risks are not well understood.',
-      ' ',
-      'Holistic Evaluation of Language Models (HELM) is a living benchmark that aims to improve the transparency of language models.'
+      '<p>Significant effort has recently been made in developing text-to-image generation models, which take textual prompts as input and generate images. As these models are widely used in real-world applications, there is an urgent need to comprehensively understand their capabilities and risks. However, existing evaluations primarily focus on image-text alignment and image quality. To address this limitation, we introduce a new benchmark, <u>Holistic Evaluation of Text-To-Image Models (HEIM).</u></p>',
+      '<p>We identify 12 different aspects that are important in real-world model deployment, including:</p>',
+      '<ul> <li><i>image-text alignment</i></li> <li><i>image quality</i></li> <li><i>aesthetics</i></li> <li><i>originality</i></li> <li><i>reasoning</i></li> <li><i>knowledge</i></li> <li><i>bias</i></li> <li><i>toxicity</i></li> <li><i>fairness</i></li> <li><i>robustness</i></li> <li><i>multilinguality</i></li> <li><i>efficiency</i></li> </ul>',
+      '<p>By curating scenarios encompassing these aspects, we evaluate state-of-the-art text-to-image models using this benchmark. Unlike previous evaluations that focused on alignment and quality, HEIM significantly improves coverage by evaluating all models across all aspects. Our results reveal that no single model excels in all aspects, with different models demonstrating strengths in different aspects.</p>',
+      '<p><strong>For full transparency, this website contains all the prompts, generated images and the results for the automated and human evaluation metrics.</strong></p>',
+      '<p>Inspired by HELM, we decompose the model evaluation into four key components: aspect, scenario, adaptation, and metric:</p>'
     ]);
-
-    function organization(src, href, height) {
-      return $('<div>', {class: 'logo-item'}).append($('<a>', {href}).append($('<img>', {src, height})));
-    }
-    const defaultSize = 36;
-    const largerSize = 50;
-    const $organizations = $('<div>', {class: 'logo-container'}).append([
-      organization('images/organizations/ai21.png', 'https://www.ai21.com/', defaultSize),
-      organization('images/organizations/anthropic.png', 'https://www.anthropic.com/', defaultSize),
-      organization('images/organizations/bigscience.png', 'https://bigscience.huggingface.co/', largerSize),
-      organization('images/organizations/cohere.png', 'https://cohere.ai/', defaultSize),
-      organization('images/organizations/eleutherai.png', 'https://www.eleuther.ai/', largerSize),
-      organization('images/organizations/google.png', 'https://ai.google/', defaultSize),
-      organization('images/organizations/meta.png', 'https://ai.facebook.com/', largerSize),
-      organization('images/organizations/microsoft.png', 'https://turing.microsoft.com/', defaultSize),
-      organization('images/organizations/nvidia.png', 'https://www.nvidia.com/en-us/research/machine-learning-artificial-intelligence/', largerSize),
-      organization('images/organizations/openai.png', 'https://openai.com/', defaultSize),
-      organization('images/organizations/tsinghua-keg.png', 'https://keg.cs.tsinghua.edu.cn/', largerSize),
-      organization('images/organizations/yandex.png', 'https://yandex.com/', defaultSize),
-      organization('images/organizations/together.png', 'https://together.xyz/', defaultSize),
-    ]);
-    $result.append($organizations);
-
-    $description.append($('<ol>').append([
-      $('<li>').append('<b>Broad coverage and recognition of incompleteness</b>. We define a taxonomy over the scenarios we would ideally like to evaluate, select scenarios and metrics to cover the space and make explicit what is missing.')
-               .append($('<div>', {class: 'text-center'}).append($('<img>', {src: 'images/taxonomy-scenarios.png', width: '300px'}))),
-      $('<li>').append('<b>Multi-metric measurement</b>. Rather than focus on isolated metrics such as accuracy, we simultaneously measure multiple metrics (e.g., accuracy, robustness, calibration, efficiency) for each scenario, allowing analysis of tradeoffs.')
-               .append($('<div>', {class: 'text-center'}).append($('<img>', {src: 'images/scenarios-by-metrics.png', width: '300px'}))),
-      $('<li>').append('<b>Standardization</b>. We evaluate all the models that we have access to on the same scenarios with the same adaptation strategy (e.g., prompting), allowing for controlled comparisons. Thanks to all the companies for providing API access to the limited-access and closed models and <a href="https://together.xyz">Together</a> for providing the infrastructure to run the open models.')
-               .append($organizations),
-      $('<li>').append('<b>Transparency</b>. All the scenarios, predictions, prompts, code are available for further analysis on this website. We invite you to click below to explore!'),
-    ]));
-
     $result.append([
       $('<div>', {class: 'col-sm-2'}),
       $description,
       $('<div>', {class: 'col-sm-2'}),
     ]);
+    $result.append($('<div>', {class: 'col-sm-12'}).append(heimFig()));
 
     const $models = renderModelList();
     const $scenarios = renderScenarioList();
@@ -1123,7 +1095,7 @@ $(function () {
         });
         // Handle Infinity === Infinity or -Infinity === -Infinity
         return cellValues[0] === cellValues[1] ? 0 :
-          (sortOrder === 'desc' ?
+          (sortOrder === 'desc' ? 
             cellValues[1] - cellValues[0] :
             cellValues[0] - cellValues[1]);
       });

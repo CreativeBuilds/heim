@@ -21,10 +21,10 @@ Using [Anaconda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 ```
 # Create a virtual environment.
 # Only run this the first time.
-conda create -n crfm-helm python=3.8 pip
+conda create -n crfm-heim python=3.8 pip
 
 # Activate the virtual environment.
-conda activate crfm-helm
+conda activate crfm-heim
 ```
 
 ## Install HELM
@@ -32,11 +32,5 @@ conda activate crfm-helm
 Within this virtual environment, run:
 
 ```
-pip install crfm-helm
-```
-
-To install the additional dependencies for HEIM, run:
-
-```
-pip install "crfm-helm[heim]"
-``` 
+pip install crfm-heim
+``
