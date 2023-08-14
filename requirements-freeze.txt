@@ -129,7 +129,7 @@ opencv-python==4.7.0.72
 opencv-python-headless==4.8.0.76
 opt-einsum==3.3.0
 optax==0.1.7
-orbax==0.1.2
+# orbax==0.1.2
 packaging==23.1
 pandas==2.0.3
 param==1.13.0
