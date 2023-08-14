@@ -221,6 +221,7 @@ torch-fidelity==0.3.0
 torchmetrics==0.11.4
 torchvision==0.15.2
 tqdm==4.64.1
+tiktoken==0.3.3
 traitlets==5.9.0
 transformers==4.28.1
 typer==0.9.0
