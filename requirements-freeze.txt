@@ -75,6 +75,7 @@ hjson==3.1.0
 httplib2==0.22.0
 huggingface-hub==0.16.4
 humanfriendly==10.0
+icetk==0.0.4
 idna==3.4
 imageio==2.31.1
 importlib-metadata==6.8.0
