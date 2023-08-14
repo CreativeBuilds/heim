@@ -168,13 +168,6 @@ class AutoClient(Client):
                     )
                 else:
                     client = HuggingFaceClient(cache_config)
-            elif organization == "anthropic":
-                from helm.proxy.clients.anthropic_client import AnthropicClient
-
-                client = AnthropicClient(
-                    api_key=self.credentials.get("anthropicApiKey", None),
-                    cache_config=cache_config,
-                )
             elif organization == "microsoft":
                 from helm.proxy.clients.microsoft_client import MicrosoftClient
 
@@ -311,12 +304,6 @@ class AutoClient(Client):
                 from helm.proxy.clients.aleph_alpha_client import AlephAlphaClient
 
                 client = AlephAlphaClient(api_key=self.credentials["alephAlphaKey"], cache_config=cache_config)
-            elif organization == "anthropic":
-                from helm.proxy.clients.anthropic_client import AnthropicClient
-
-                client = AnthropicClient(
-                    api_key=self.credentials.get("anthropicApiKey", None), cache_config=cache_config
-                )
             elif organization == "TsinghuaKEG":
                 from helm.proxy.clients.ice_tokenizer_client import ICETokenizerClient
 

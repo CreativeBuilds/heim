@@ -250,6 +250,11 @@ ALL_MODELS = [
         name="huggingface/vintedois-diffusion-v0-1",
         tags=[TEXT_TO_IMAGE_MODEL_TAG, CLIP_TOKENIZER_TAG],
     ),
+    # For debugging
+    Model(
+        group="simple",
+        name="simple/model1",
+    ),
 ]
 
 MODEL_NAME_TO_MODEL: Dict[str, Model] = {model.name: model for model in ALL_MODELS}

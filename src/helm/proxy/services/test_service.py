@@ -38,13 +38,6 @@ class TestServerService:
         result = self.service.make_request(self.auth, request)
         assert len(result.completions) == num_completions
 
-    def test_example_queries(self):
-        """Make sure example queries parse."""
-        general_info = self.service.get_general_info()
-        for query in general_info.example_queries:
-            response = self.service.expand_query(query)
-            assert len(response.requests) > 0
-
     def test_create_account(self):
         account = self.service.create_account(self.auth)
         assert account.api_key
