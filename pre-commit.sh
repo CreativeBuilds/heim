@@ -16,8 +16,10 @@ if [[ $OSTYPE != 'darwin'* ]]; then
   # Manually install pytorch to avoid pip getting killed: https://stackoverflow.com/a/54329850
   pip install --no-cache-dir --find-links https://download.pytorch.org/whl/torch_stable.html torch==1.12.1+cu113 torchvision==0.13.1+cu113
 fi
+
 # Manually install protobuf to workaround issue: https://github.com/protocolbuffers/protobuf/issues/6550
-pip install --no-binary=protobuf protobuf==3.20.2
+pip install --no-binary=protobuf protobuf==3.20.1
+
 # Install all pinned dependencies
 pip install -r requirements-freeze.txt
 pip install -e .
@@ -35,6 +37,7 @@ black --check --diff src scripts || (
   exit 1
 )
 
+mkdir -p .mypy_cache
 mypy --install-types --non-interactive src scripts
 flake8 src scripts
 

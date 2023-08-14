@@ -19,6 +19,10 @@ from helm.common.general import write
 from helm.common.hierarchical_logger import hlog, htrack
 from helm.common.request import Request
 from helm.common.codec import from_json, to_json
+from helm.common.images_utils import encode_base64
+
+
+MAX_REQUEST_STATES_TO_DISPLAY: int = 1000
 
 
 @dataclass(frozen=True)
@@ -42,6 +46,9 @@ class DisplayPrediction:
 
     truncated_predicted_text: Optional[str]
     """The truncated prediction text, if truncation is required by the Adapter method."""
+
+    base64_images: List[str]
+    """Images in base64."""
 
     mapped_output: Optional[str]
     """The mapped output, if an output mapping exists and the prediction can be mapped"""
@@ -128,7 +135,7 @@ def _get_metric_names_for_group(run_group_name: str, schema: Schema) -> Set[str]
         if metric_group is None:
             continue
         for metric_name_matcher in metric_group.metrics:
-            if metric_name_matcher.perturbation_name:
+            if metric_name_matcher.perturbation_name and metric_name_matcher.perturbation_name != "__all__":
                 continue
             result.add(metric_name_matcher.substitute(run_group.environment).name)
     return result
@@ -203,7 +210,7 @@ def write_run_display_json(run_path: str, run_spec: RunSpec, schema: Schema, ski
     predictions: List[DisplayPrediction] = []
     requests: List[DisplayRequest] = []
 
-    for request_state in scenario_state.request_states:
+    for request_state in scenario_state.request_states[:MAX_REQUEST_STATES_TO_DISPLAY]:
         assert request_state.instance.id is not None
         if request_state.result is None:
             continue
@@ -242,6 +249,14 @@ def write_run_display_json(run_path: str, run_spec: RunSpec, schema: Schema, ski
         instance_id_to_instance[
             (request_state.instance.id, request_state.instance.perturbation)
         ] = request_state.instance
+
+        # Process images and include if they exist
+        images: List[str] = [
+            encode_base64(completion.file_location)
+            for completion in request_state.result.completions
+            if completion.file_location is not None and os.path.exists(completion.file_location)
+        ]
+
         predictions.append(
             DisplayPrediction(
                 instance_id=request_state.instance.id,
@@ -249,6 +264,7 @@ def write_run_display_json(run_path: str, run_spec: RunSpec, schema: Schema, ski
                 train_trial_index=request_state.train_trial_index,
                 predicted_text=predicted_text,
                 truncated_predicted_text=_truncate_predicted_text(predicted_text, request_state, run_spec.adapter_spec),
+                base64_images=images,
                 mapped_output=mapped_output,
                 reference_index=request_state.reference_index,
                 stats=trial_stats,

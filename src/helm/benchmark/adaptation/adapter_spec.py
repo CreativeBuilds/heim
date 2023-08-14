@@ -68,6 +68,9 @@ class AdapterSpec:
     # set of training instances.  Used to compute error bars.
     num_train_trials: int = 1
 
+    # Number of trials, where we query the model with the exact same requests
+    num_random_trials: int = 1
+
     # If true, randomly sample N training examples; if false, select N consecutive training examples
     sample_train: bool = True
 
@@ -87,3 +90,29 @@ class AdapterSpec:
 
     # Random string (used concretely to bypass cache / see diverse results)
     random: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class TextToImageAdapterSpec(AdapterSpec):
+    """
+    Specifies how to take a `Scenario` (a list of `Instance`s) and produce a
+    `ScenarioState` (set of `Request`s ). On top of the fields in `AdapterSpec`,
+    contains additional fields for evaluating text-to-image models
+    """
+
+    # The width of the image. Generates images with the default size when unspecified.
+    width: Optional[int] = None
+
+    # The height of the image. Generates images with the default size when unspecified.
+    height: Optional[int] = None
+
+    # How much importance is given to your prompt when generating images:
+    # 0 -> completely random image
+    # Lower values -> creative images
+    # Higher values -> image that follows prompt more precisely
+    # Not setting a value will use the model's default.
+    guidance_scale: Optional[float] = None
+
+    # The number of denoising steps for diffusion models.
+    # Not setting a value will use the model's default.
+    steps: Optional[int] = None

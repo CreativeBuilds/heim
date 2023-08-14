@@ -2,9 +2,10 @@ import argparse
 import json
 import os
 import typing
-from typing import List
+from typing import List, Set
 from collections import Counter
 from dacite import from_dict
+from tqdm import tqdm
 
 from helm.common.request import Request
 from helm.common.cache import (
@@ -15,6 +16,8 @@ from helm.common.cache import (
     request_to_key,
 )
 from helm.common.hierarchical_logger import hlog, htrack, htrack_block
+from helm.proxy.clients.image_generation.adobe_vision_client import AdobeVisionClient
+from helm.proxy.clients.image_generation.aleph_alpha_vision_client import AlephAlphaVisionClient
 from helm.proxy.clients.google_client import GoogleClient
 from helm.proxy.clients.together_client import TogetherClient
 from helm.proxy.clients.microsoft_client import MicrosoftClient
@@ -34,7 +37,7 @@ Usage:
 """
 
 # List of organizations currently supported for offline batch evaluation
-SUPPORTED_ORGS: List[str] = ["together", "google", "microsoft"]
+SUPPORTED_ORGS: List[str] = ["together", "google", "microsoft", "AlephAlphaVision", "adobe"]
 
 
 @htrack("Generating jsonl file with list of raw requests")
@@ -49,6 +52,10 @@ def export_requests(cache_config: KeyValueStoreCacheConfig, organization: str, r
             return TogetherClient
         elif organization == "google":
             return GoogleClient
+        elif organization == "adobe":
+            return AdobeVisionClient
+        elif organization == "AlephAlphaVision":
+            return AlephAlphaVisionClient
         else:
             raise ValueError(f"Invalid organization: {organization}")
 
@@ -57,9 +64,13 @@ def export_requests(cache_config: KeyValueStoreCacheConfig, organization: str, r
 
         # Only export requests that are not in the cache
         if not store.contains(raw_request):
-            request_json: str = request_to_key({"scenario": scenario_name, "request": raw_request})
-            out_file.write(request_json + "\n")
-            counts["pending_count"] += 1
+            request_json: str = json.dumps(
+                {"scenario": scenario_name, "request": raw_request}, sort_keys=True, ensure_ascii=False
+            )
+            if request_json not in unique_json_requests:
+                out_file.write(request_json + "\n")
+                counts["pending_count"] += 1
+                unique_json_requests.add(request_json)
         else:
             counts["cached_count"] += 1
 
@@ -83,6 +94,8 @@ def export_requests(cache_config: KeyValueStoreCacheConfig, organization: str, r
                 counts["cached_count"] += 1
 
     counts: typing.Counter = Counter(pending_count=0, cached_count=0)
+
+    unique_json_requests: Set[str] = set()
 
     # Go through all the valid run folders, pull requests from the scenario_state.json files
     # and write them out to the jsonl file at path `output_path`.
@@ -113,11 +126,11 @@ def export_requests(cache_config: KeyValueStoreCacheConfig, organization: str, r
                         model_name: str = scenario_state["adapter_spec"]["model"]
                         current_organization: str = model_name.split("/")[0]
 
-                        if current_organization != organization:
+                        if current_organization not in organization:
                             hlog(f"Not generating requests for {current_organization}.")
                             continue
 
-                        for request_state in scenario_state["request_states"]:
+                        for request_state in tqdm(scenario_state["request_states"]):
                             request: Request = from_dict(Request, request_state["request"])
                             if current_organization == "microsoft":
                                 try:

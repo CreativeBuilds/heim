@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import List, Optional, Dict
 import dacite
+import importlib_resources as resources
 import mako.template
 import yaml  # type: ignore
-import importlib_resources as resources
 
 from helm.common.general import hlog
 from helm.benchmark.metrics.metric_name import MetricName
@@ -34,7 +34,7 @@ class Field:
     # Description of the field
     description: Optional[str] = None
 
-    # Whether a lower vaue for this field corresponds to a better model
+    # Whether a lower value for this field corresponds to a better model
     # (e.g., False for accuracy, True for perplexity, None for num_trials)
     lower_is_better: Optional[bool] = None
 
@@ -97,20 +97,23 @@ class MetricNameMatcher:
         if self.name != metric_name.name:
             return False
 
-        if self.split != metric_name.split:
-            return False
+        # Temporary workaround: when split is "__all__", it matches all splits
+        if self.split != "__all__":
+            if self.split != metric_name.split:
+                return False
 
-        # Optional
-        if self.sub_split is not None and self.sub_split != metric_name.sub_split:
-            return False
+            # Optional
+            if self.sub_split is not None and self.sub_split != metric_name.sub_split:
+                return False
 
-        metric_perturbation_name = metric_name.perturbation and metric_name.perturbation.name
-        if self.perturbation_name != metric_perturbation_name:
-            return False
+        if self.perturbation_name != "__all__":
+            metric_perturbation_name = metric_name.perturbation and metric_name.perturbation.name
+            if self.perturbation_name != metric_perturbation_name:
+                return False
 
-        # If there is a perturbation, only return the worst
-        if metric_name.perturbation and metric_name.perturbation.computed_on != PERTURBATION_WORST:
-            return False
+            # If there is a perturbation, only return the worst
+            if metric_name.perturbation and metric_name.perturbation.computed_on != PERTURBATION_WORST:
+                return False
 
         return True
 
@@ -195,7 +198,7 @@ class RunGroup(Field):
     # If THIS_GROUP_ONLY, we include the run in this specific group but not to others (this is useful for ablations
     # where we want to display a run for the ablation group but not for the more general groups it belongs to).
     # Example: If a run has the groups ["imdb", "ablation_in_context"] and "imdb" has visibility ALL_GROUPS, while
-    # "ablation_in_context" has visiblity THIS_GROUP_ONLY, then this run is displayed under "ablation_in_context", but
+    # "ablation_in_context" has visibility THIS_GROUP_ONLY, then this run is displayed under "ablation_in_context", but
     # not under "imdb" (and thus is not aggregated with the canonical runs with groups ["imdb"].
     visibility: str = ALL_GROUPS
 
@@ -242,9 +245,9 @@ class Schema:
         self.name_to_run_group = {run_group.name: run_group for run_group in self.run_groups}
 
 
-def read_schema() -> Schema:
-    hlog(f"Reading schema from {SCHEMA_YAML_FILENAME}...")
-    schema_path = resources.files(SCHEMA_YAML_PACKAGE).joinpath(SCHEMA_YAML_FILENAME)
+def read_schema(schema_yaml_package: str = SCHEMA_YAML_PACKAGE) -> Schema:
+    hlog(f"Reading schema from {schema_yaml_package}...")
+    schema_path = resources.files(schema_yaml_package).joinpath(SCHEMA_YAML_FILENAME)
     with schema_path.open("r") as f:
         raw = yaml.safe_load(f)
     return dacite.from_dict(Schema, raw)

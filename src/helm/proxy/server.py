@@ -18,10 +18,12 @@ import bottle
 
 from helm.common.authentication import Authentication
 from helm.common.hierarchical_logger import hlog
-from helm.common.request import Request
+from helm.common.moderations_api_request import ModerationAPIRequest
+from helm.common.request import Request, TextToImageRequest
 from helm.common.perspective_api_request import PerspectiveAPIRequest
 from helm.common.tokenization_request import TokenizationRequest, DecodeRequest
 from .accounts import Account
+from .models import is_text_to_image_model
 from .services.server_service import ServerService
 from .query import Query
 
@@ -73,6 +75,12 @@ def handle_root():
 def handle_static_filename(filename):
     resp = bottle.static_file(filename, root=os.path.join(os.path.dirname(__file__), "static"))
     resp.add_header("Cache-Control", "no-store, must-revalidate ")
+    return resp
+
+
+@app.get("/output/<filename:path>")
+def handle_output_filename(filename):
+    resp = bottle.static_file(filename, root=app.config["crfm.proxy.outputpath"])
     return resp
 
 
@@ -156,7 +164,10 @@ def handle_query():
 def handle_request():
     def perform(args):
         auth = Authentication(**json.loads(args["auth"]))
-        request = Request(**json.loads(args["request"]))
+        raw_request = json.loads(args["request"])
+        request = from_dict(
+            TextToImageRequest if is_text_to_image_model(raw_request["model"]) else Request, data=raw_request
+        )
         return dataclasses.asdict(service.make_request(auth, request))
 
     return safe_call(perform)
@@ -188,6 +199,16 @@ def handle_toxicity_request():
         auth = Authentication(**json.loads(args["auth"]))
         request = PerspectiveAPIRequest(**json.loads(args["request"]))
         return dataclasses.asdict(service.get_toxicity_scores(auth, request))
+
+    return safe_call(perform)
+
+
+@app.get("/api/moderation")
+def handle_moderation_request():
+    def perform(args):
+        auth = Authentication(**json.loads(args["auth"]))
+        request = ModerationAPIRequest(**json.loads(args["request"]))
+        return dataclasses.asdict(service.get_moderation_results(auth, request))
 
     return safe_call(perform)
 
@@ -231,4 +252,5 @@ def main():
 
     # Clear arguments before running gunicorn as it also uses argparse
     sys.argv = [sys.argv[0]]
+    app.config["crfm.proxy.outputpath"] = os.path.join(os.path.realpath(args.base_path), "cache", "output")
     app.run(host="0.0.0.0", port=args.port, server="gunicorn", **gunicorn_args)

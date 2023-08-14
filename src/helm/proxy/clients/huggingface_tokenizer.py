@@ -26,6 +26,7 @@ _KNOWN_TOKENIZER_NAMES: Set[str] = {
     "bigcode/santacoder",
     "bigcode/starcoder",
     "hf-internal-testing/llama-tokenizer",
+    "openai/clip-vit-large-patch14",
 }
 
 

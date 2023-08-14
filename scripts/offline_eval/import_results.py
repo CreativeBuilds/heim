@@ -2,7 +2,8 @@ import argparse
 import json
 from collections import defaultdict
 import os
-from typing import Dict
+from typing import Dict, List
+from tqdm import tqdm
 
 from helm.common.cache import (
     KeyValueStoreCacheConfig,
@@ -11,7 +12,9 @@ from helm.common.cache import (
     create_key_value_store,
     request_to_key,
 )
+from helm.common.file_caches.local_file_cache import LocalFileCache
 from helm.common.hierarchical_logger import hlog, htrack
+from helm.common.images_utils import copy_image
 from .export_requests import SUPPORTED_ORGS
 
 
@@ -26,6 +29,8 @@ Usage:
 
         python3 scripts/offline_eval/import_results.py together results.jsonl
 """
+
+OFFLINE_TEXT_TO_IMAGE_ORGS: List[str] = ["AlephAlphaVision", "adobe"]
 
 
 @htrack("Updating cache with requests and results")
@@ -44,7 +49,7 @@ def import_results(cache_config: KeyValueStoreCacheConfig, organization: str, re
     # Updates cache with request/result pairs from input jsonl file at `request_results_path`
     with create_key_value_store(cache_config) as store:
         with open(request_results_path, "r") as f:
-            for line in f:
+            for line in tqdm(f):
                 if len(line.strip()) == 0:
                     continue
 
@@ -60,6 +65,38 @@ def import_results(cache_config: KeyValueStoreCacheConfig, organization: str, re
                     cache_key: dict = {"completion_index": completion_index, **request}
                     store.put(cache_key, result)
                 else:
+                    if organization in OFFLINE_TEXT_TO_IMAGE_ORGS:
+                        output_cache_path: str = os.path.join(args.cache_dir, "output")
+
+                        if organization == "AlephAlphaVision":
+                            output_cache_path = os.path.join(output_cache_path, "AlephAlpha")
+                            file_cache = LocalFileCache(output_cache_path, "jpg")
+                        elif organization == "adobe":
+                            output_cache_path = os.path.join(output_cache_path, "adobe")
+                            file_cache = LocalFileCache(output_cache_path, "png")
+
+                        images_path: str = os.path.join(os.path.dirname(request_results_path), "images")
+                        assert os.path.exists(images_path), f"Images directory does not exist at {images_path}."
+
+                        request["prompt"] = str(request["prompt"])
+                        request["request_type"] = "image-model-inference"
+                        if store.contains(request):
+                            hlog(f"Skipping request {request} because it already exists in the cache.")
+                            continue
+
+                        images_paths: List[str] = []
+                        for image_filename in result["images"]:
+                            # Copy the image from the results folder to the cache folder
+                            # Generate a unique filename for the image to guarantee unique file paths
+                            old_image_path: str = os.path.join(images_path, image_filename)
+                            assert os.path.exists(old_image_path), f"Image does not exist at {old_image_path}."
+
+                            new_image_path: str = file_cache.get_unique_file_location()
+                            images_paths.append(new_image_path)
+                            copy_image(old_image_path, new_image_path)
+                        # Save the new image paths in the cache
+                        result["images"] = images_paths
+
                     store.put(request, result)
 
                 count += 1
@@ -96,13 +133,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if (args.cache_dir and args.mongo_uri) or (not args.cache_dir and not args.mongo_uri):
-        raise ValueError("Exactly one of --cache-dir or --mongo-uri should be specified")
     cache_config: KeyValueStoreCacheConfig
-    if args.cache_dir:
-        cache_config = SqliteCacheConfig(os.path.join(args.cache_dir, f"{args.organization}.sqlite"))
-    elif args.mongo_uri:
+    if args.mongo_uri:
         cache_config = MongoCacheConfig(args.mongo_uri, args.organization)
+    elif args.cache_dir:
+        cache_config = SqliteCacheConfig(os.path.join(args.cache_dir, f"{args.organization}.sqlite"))
+    else:
+        raise ValueError("One of --cache-dir or --mongo-uri should be specified")
 
     import_results(cache_config, args.organization, args.request_results_path, args.dry_run)
     hlog("Done.")

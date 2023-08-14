@@ -18,6 +18,7 @@ from helm.proxy.models import (
     GPTNEO_TOKENIZER_TAG,
     GPT4_TOKENIZER_TAG,
     ABLATION_MODEL_TAG,
+    TEXT_TO_IMAGE_MODEL_TAG,
 )
 from .runner import RunSpec
 from helm.benchmark.adaptation.adapter_spec import AdapterSpec, Substitution
@@ -164,7 +165,7 @@ class PromptRunExpander(RunExpander):
         elif self.value == "i_o":
             adapter_spec = replace(adapter_spec, input_prefix="I: ", output_prefix="O: ")
         else:
-            raise Exception("Unknown value: {self.value}")
+            raise Exception(f"Unknown value: {self.value}")
         return [
             replace(
                 run_spec,
@@ -324,6 +325,17 @@ class NumTrainTrialsRunExpander(ReplaceValueRunExpander):
     }
 
 
+class MaxEvalInstancesRunExpander(ReplaceValueRunExpander):
+    """For varying number of val/text examples."""
+
+    name = "max_eval_instances"
+    values_dict = {
+        "heim_default": [100],
+        "heim_fid": [30_000],
+        "heim_art_styles": [17],
+    }
+
+
 class MaxTrainInstancesRunExpander(ReplaceValueRunExpander):
     """For getting learning curves."""
 
@@ -343,6 +355,19 @@ class NumOutputsRunExpander(ReplaceValueRunExpander):
     values_dict = {
         "default": [1],
         "copyright_sweep": [1, 10],
+    }
+
+
+class NumRandomTrialRunExpander(ReplaceValueRunExpander):
+    """For getting different generations for the same requests."""
+
+    name = "num_random_trials"
+    values_dict = {
+        "1": [1],
+        "2": [2],
+        "3": [3],
+        "4": [4],
+        "5": [5],
     }
 
 
@@ -392,6 +417,7 @@ class ModelRunExpander(ReplaceValueRunExpander):
                 "openai/text-davinci-003",
             ],
             "opinions_qa_ai21": ["ai21/j1-grande", "ai21/j1-jumbo", "ai21/j1-grande-v2-beta"],
+            "text_to_image": get_model_names_with_tag(TEXT_TO_IMAGE_MODEL_TAG),
         }
 
         # For each of the keys above (e.g., "text"), create a corresponding ablation (e.g., "ablation_text")
@@ -538,6 +564,20 @@ def gender(
             "mapping_file_genders": mapping_file_genders,
             "bidirectional": bidirectional,
         },
+    )
+
+
+def translate(language_code: str) -> PerturbationSpec:
+    return PerturbationSpec(
+        class_name="helm.benchmark.augmentations.translate_perturbation.TranslatePerturbation",
+        args={"language_code": language_code},
+    )
+
+
+def style(modifications: List[str]) -> PerturbationSpec:
+    return PerturbationSpec(
+        class_name="helm.benchmark.augmentations.style_perturbation.StylePerturbation",
+        args={"modifications": modifications},
     )
 
 
@@ -702,6 +742,21 @@ PERTURBATION_SPECS_DICT: Dict[str, Dict[str, List[PerturbationSpec]]] = {
             space(max_spaces=3),
             synonym(prob=0.1),
             typo(prob=0.01),
+        ]
+    },
+    # Multilinguality
+    "chinese": {"chinese": [translate(language_code="zh-CN")]},
+    "hindi": {"hindi": [translate(language_code="hi")]},
+    "spanish": {"spanish": [translate(language_code="es")]},
+    # Styles
+    "art": {
+        "art": [
+            style(modifications=["oil painting"]),
+            style(modifications=["watercolor"]),
+            style(modifications=["pencil sketch"]),
+            style(modifications=["animation"]),
+            style(modifications=["vector graphics"]),
+            style(modifications=["pixel art"]),
         ]
     },
 }
@@ -1047,8 +1102,10 @@ RUN_EXPANDER_SUBCLASSES: List[Type[RunExpander]] = [
     AddToStopRunExpander,
     GlobalPrefixRunExpander,
     NumTrainTrialsRunExpander,
+    MaxEvalInstancesRunExpander,
     MaxTrainInstancesRunExpander,
     NumOutputsRunExpander,
+    NumRandomTrialRunExpander,
     ModelRunExpander,
     DataAugmentationRunExpander,
     TokenizerRunExpander,

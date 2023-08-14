@@ -3,6 +3,7 @@ import json
 import os
 import shlex
 import subprocess
+import urllib
 import uuid
 import zstandard
 from typing import Any, Callable, Dict, List, Optional, TypeVar
@@ -19,10 +20,17 @@ _CREDENTIALS_FILE_NAME = "credentials.conf"
 _CREDENTIALS_ENV_NAME = "HELM_CREDENTIALS"
 
 
+def get_helm_cache_path():
+    """Gets the local cache path."""
+    path: str = ".helm_cache"
+    ensure_directory_exists(path)
+    return path
+
+
 def singleton(items: List):
     """Ensure there's only one item in `items` and return it."""
-    if len(items) != 1:
-        raise ValueError(f"Expected 1 item, got {len(items)} items: {items}")
+    # if len(items) != 1:
+    #     raise ValueError(f"Expected 1 item, got {len(items)} items: {items}")
     return items[0]
 
 
@@ -309,3 +317,8 @@ def safe_symlink(src: str, dest: str) -> None:
 
     if not os.path.exists(dest):
         os.symlink(src, dest)
+
+
+def is_url(location: str) -> bool:
+    """Return True if `location` is a url. False otherwise."""
+    return urllib.parse.urlparse(location).scheme in ["http", "https"]

@@ -10,11 +10,17 @@ prod_env
 benchmark_output
 www
 proxy_api_key*.txt
-microsoft_client.lock
+*.lock
+.helm_cache
+logs/
+mturk/
 *.log
 *.out
 *.jsonl
 nltk_data/
+__autograph_generated*.py
+tmp*/
+DeepFloyd_output/
 
 # MechanicalTurkCritiqueClient
 mturk/

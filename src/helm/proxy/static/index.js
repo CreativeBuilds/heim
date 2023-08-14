@@ -242,7 +242,12 @@ $(function () {
         const title = 'Generation finished because of this reason: ' + JSON.stringify(completion.finish_reason);
         $metadata.append(' ').append($('<span>', {title}).append(completion.finish_reason.reason));
       }
-      $result.append($('<div>', {class: 'completion'}).append($metadata).append($contents));
+      $completion = $('<div>', {class: 'completion'}).append($metadata).append($contents);
+      if (completion.file_path) {;
+        const image_url = '/output/' + completion.file_path.split('/').slice(-2).join('/');
+        $completion.append($('<img>', {src: image_url}));
+      }
+      $result.append($completion);
     });
     $result.append($('<i>').append(renderTime(requestResult.request_time)));
     return $result;
@@ -337,7 +342,7 @@ $(function () {
   ////////////////////////////////////////////////////////////
   // For help.html
 
-  function renderModelsTable() {
+  function renderModelsTable(text_to_image) {
     // Render the list of models
     const $table = $('<table>', {class: 'table'});
     const $header = $('<tr>')
@@ -346,7 +351,9 @@ $(function () {
       .append($('<td>').append('description'))
       .append($('<td>').append('tags'));
     $table.append($header);
-    generalInfo.all_models.forEach((model) => {
+
+    const models= text_to_image ? generalInfo.all_text_to_image_models : generalInfo.all_text_code_models;
+    models.forEach((model) => {
       const $row = $('<tr>')
         .append($('<td>').append($('<tt>').append(model.group)))
         .append($('<td>').append($('<tt>').append(model.name)))
@@ -379,7 +386,12 @@ $(function () {
     // For help.html
     const $helpModels = $('#help-models');
     if ($helpModels.length > 0) {
-      $helpModels.empty().append(renderModelsTable());
+      $helpModels.empty().append(renderModelsTable(false));
+    }
+
+    const $helpTextToImageModels = $('#help-text-to-image-models');
+    if ($helpTextToImageModels.length > 0) {
+      $helpTextToImageModels.empty().append(renderModelsTable(true));
     }
   });
 });

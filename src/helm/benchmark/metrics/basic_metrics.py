@@ -30,8 +30,6 @@ from helm.benchmark.window_services.window_service import WindowService
 from helm.benchmark.window_services.window_service_factory import WindowServiceFactory
 from helm.benchmark.window_services.tokenizer_service import TokenizerService
 from helm.benchmark.scenarios.scenario import CORRECT_TAG, Instance, Reference
-from helm.benchmark.scenarios.math_scenario import is_equiv, is_equiv_chain_of_thought
-from helm.benchmark.scenarios.code_scenario import CodeReference
 from . import code_metrics_helper
 from .metric import Metric, get_unique_stat_by_name
 from .metric_name import MetricName
@@ -438,26 +436,9 @@ class BasicMetric(Metric):
             score_func: Callable,
             group: Optional[str] = None,
         ) -> List[Stat]:
-            if name.name == "pass":  # Calculate pass@k for HumanEval from CodeScenario.
-                score_func = cast(Callable[[Tuple[str, Optional[Dict]], str], float], score_func)  # Make mypy happy.
-                code_golds = cast(List[CodeReference], golds)
-                results = [
-                    score_func((gold.output.text, gold.test_cases), pred) for gold in code_golds for pred in preds
-                ]
-                _len, _sum = len(results), int(sum(results))  # Cast to int to make type match.
-                score_1 = pass_at_k_estimator(_len, _sum, 1)
-                score_k = pass_at_k_estimator(_len, _sum, adapter_spec.num_outputs)
-            elif name.name == "code_eval_acc":
-                score_func = cast(Callable[[Tuple[str, Optional[Dict]], str], float], score_func)  # Make mypy happy.
-                code_golds = cast(List[CodeReference], golds)
-                score_1 = max(score_func((gold.output.text, gold.test_cases), preds[0]) for gold in code_golds)
-                score_k = max(
-                    score_func((gold.output.text, gold.test_cases), pred) for gold in code_golds for pred in preds
-                )
-            else:
-                score_func = cast(Callable[[str, str], float], score_func)  # Make mypy happy.
-                score_1 = max(score_func(gold.output.text, preds[0]) for gold in golds)
-                score_k = max(score_func(gold.output.text, pred) for gold in golds for pred in preds)
+            score_func = cast(Callable[[str, str], float], score_func)  # Make mypy happy.
+            score_1 = max(score_func(gold.output.text, preds[0]) for gold in golds)
+            score_k = max(score_func(gold.output.text, pred) for gold in golds for pred in preds)
 
             metrics = [Stat(name).add(score_1)]  # score_1 corresponds using one prediction
             if adapter_spec.num_outputs != 1:
@@ -474,8 +455,6 @@ class BasicMetric(Metric):
             "exact_set_match": exact_set_match,
             "iou_set_match": iou_set_match,
             "f1_set_match": f1_set_match,
-            "math_equiv": is_equiv,
-            "math_equiv_chain_of_thought": is_equiv_chain_of_thought,
             "code_eval_acc": code_eval,
             "pass": code_eval,
             "f1_score": f1_score,

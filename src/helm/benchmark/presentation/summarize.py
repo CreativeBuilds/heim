@@ -27,7 +27,17 @@ from helm.benchmark.metrics.metric import get_all_stats_by_name
 from helm.benchmark.metrics.statistic import Stat, merge_stat
 from helm.benchmark.runner import RunSpec, LATEST_SYMLINK
 from .table import Cell, HeaderCell, Table, Hyperlink, table_to_latex
-from .schema import MetricNameMatcher, RunGroup, read_schema, SCHEMA_YAML_FILENAME, BY_GROUP, THIS_GROUP_ONLY, NO_GROUPS
+from .schema import (
+    MetricNameMatcher,
+    RunGroup,
+    Schema,
+    read_schema,
+    SCHEMA_YAML_PACKAGE,
+    SCHEMA_YAML_FILENAME,
+    BY_GROUP,
+    THIS_GROUP_ONLY,
+    NO_GROUPS,
+)
 
 from .contamination import (
     read_contamination,
@@ -232,13 +242,13 @@ class Summarizer:
         "selective_acc@10",
     }
 
-    def __init__(self, suite: str, output_path: str, verbose: bool, num_threads: int):
+    def __init__(self, suite: str, output_path: str, static_package: str, verbose: bool, num_threads: int):
         self.suite: str = suite
         self.run_suite_path: str = os.path.join(output_path, "runs", suite)
         self.verbose: bool = verbose
         self.num_threads: int = num_threads
 
-        self.schema = read_schema()
+        self.schema: Schema = read_schema(static_package)
         self.contamination = read_contamination()
         validate_contamination(self.contamination, self.schema)
 
@@ -537,7 +547,7 @@ class Summarizer:
 
         # TODO: need to exclude contaminated numbers somehow
         value: Optional[float] = None if hide_value else aggregate_stat.mean
-        description = aggregate_stat.bare_str()
+        description: str = aggregate_stat.bare_str()
         if additional_info:
             description += "\n" + additional_info
         if self.verbose:
@@ -605,7 +615,7 @@ class Summarizer:
                     header_field.display_name + ": " + header_field.description
                 )
 
-                if matcher.perturbation_name is not None:
+                if matcher.perturbation_name is not None and matcher.perturbation_name != "__all__":
                     perturbation_field = self.schema.name_to_perturbation[matcher.perturbation_name]
                     header_name += " (" + perturbation_field.get_short_display_name() + ")"
                     description += (
@@ -966,6 +976,13 @@ def main():
         "-o", "--output-path", type=str, help="Where the benchmarking output lives", default="benchmark_output"
     )
     parser.add_argument(
+        "-s",
+        "--static-package",
+        type=str,
+        help="Where schema.yaml lives",
+        default=SCHEMA_YAML_PACKAGE,
+    )
+    parser.add_argument(
         "--suite",
         type=str,
         help="Name of the suite this run belongs to (default is today's date).",
@@ -986,7 +1003,11 @@ def main():
 
     # Output JSON files summarizing the benchmark results which will be loaded in the web interface
     summarizer = Summarizer(
-        suite=args.suite, output_path=args.output_path, verbose=args.debug, num_threads=args.num_threads
+        suite=args.suite,
+        output_path=args.output_path,
+        static_package=args.static_package,
+        verbose=args.debug,
+        num_threads=args.num_threads,
     )
     summarizer.read_runs()
     summarizer.check_metrics_defined()

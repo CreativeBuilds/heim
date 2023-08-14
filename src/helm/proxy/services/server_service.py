@@ -4,8 +4,12 @@ from typing import List, Optional
 
 from helm.common.critique_request import CritiqueRequest, CritiqueRequestResult
 from helm.common.authentication import Authentication
+from helm.common.moderations_api_request import ModerationAPIRequest, ModerationAPIRequestResult
 from helm.common.general import ensure_directory_exists, parse_hocon, get_credentials
 from helm.common.perspective_api_request import PerspectiveAPIRequest, PerspectiveAPIRequestResult
+from helm.common.clip_score_request import CLIPScoreRequest, CLIPScoreResult
+from helm.common.nudity_check_request import NudityCheckRequest, NudityCheckResult
+from helm.common.file_upload_request import FileUploadRequest, FileUploadResult
 from helm.common.tokenization_request import (
     WindowServiceInfo,
     TokenizationRequest,
@@ -17,9 +21,20 @@ from helm.common.request import Request, RequestResult
 from helm.common.hierarchical_logger import hlog
 from helm.proxy.accounts import Accounts, Account
 from helm.proxy.clients.auto_client import AutoClient
+from helm.proxy.clients.perspective_api_client import PerspectiveAPIClient
+from helm.proxy.clients.image_generation.nudity_check_client import NudityCheckClient
+from helm.proxy.clients.gcs_client import GCSClient
+from helm.proxy.clients.clip_score_client import CLIPScoreClient
 from helm.proxy.clients.toxicity_classifier_client import ToxicityClassifierClient
 from helm.proxy.example_queries import example_queries
-from helm.proxy.models import ALL_MODELS, get_model_group
+from helm.proxy.models import (
+    ALL_MODELS,
+    CODE_MODEL_TAG,
+    TEXT_MODEL_TAG,
+    TEXT_TO_IMAGE_MODEL_TAG,
+    get_model_group,
+    get_models_with_tag,
+)
 from helm.proxy.query import Query, QueryResult
 from helm.proxy.retry import retry_request
 from helm.proxy.token_counters.auto_token_counter import AutoTokenCounter
@@ -48,11 +63,24 @@ class ServerService(Service):
         self.client = AutoClient(credentials, cache_path, mongo_uri)
         self.token_counter = AutoTokenCounter(self.client.get_huggingface_client())
         self.accounts = Accounts(accounts_path, root_mode=root_mode)
-        # Lazily instantiated by get_toxicity_scores()
+
+        self.moderation_api_client = self.client.get_moderation_api_client()
+
+        # Lazily instantiate the following clients
+        self.perspective_api_client: Optional[PerspectiveAPIClient] = None
+        self.nudity_check_client: Optional[NudityCheckClient] = None
+        self.clip_score_client: Optional[CLIPScoreClient] = None
+        self.gcs_client: Optional[GCSClient] = None
         self.toxicity_classifier_client: Optional[ToxicityClassifierClient] = None
 
     def get_general_info(self) -> GeneralInfo:
-        return GeneralInfo(version=VERSION, example_queries=example_queries, all_models=ALL_MODELS)
+        return GeneralInfo(
+            version=VERSION,
+            example_queries=example_queries,
+            all_models=ALL_MODELS,
+            all_text_code_models=get_models_with_tag(TEXT_MODEL_TAG) + get_models_with_tag(CODE_MODEL_TAG),
+            all_text_to_image_models=get_models_with_tag(TEXT_TO_IMAGE_MODEL_TAG),
+        )
 
     def get_window_service_info(self, model_name) -> WindowServiceInfo:
         # The import statement is placed here to avoid two problems, please refer to the link for details
@@ -113,6 +141,30 @@ class ServerService(Service):
         self.accounts.authenticate(auth)
         return self.client.decode(request)
 
+    def upload(self, auth: Authentication, request: FileUploadRequest) -> FileUploadResult:
+        """Uploads a file to external storage."""
+        self.accounts.authenticate(auth)
+
+        if not self.gcs_client:
+            self.gcs_client = self.client.get_gcs_client()
+        return self.gcs_client.upload(request)
+
+    def check_nudity(self, auth: Authentication, request: NudityCheckRequest) -> NudityCheckResult:
+        """Check for nudity."""
+        self.accounts.authenticate(auth)
+
+        if not self.nudity_check_client:
+            self.nudity_check_client = self.client.get_nudity_check_client()
+        return self.nudity_check_client.check_nudity(request)
+
+    def compute_clip_score(self, auth: Authentication, request: CLIPScoreRequest) -> CLIPScoreResult:
+        """Computes CLIPScore for a given caption and image."""
+        self.accounts.authenticate(auth)
+
+        if not self.clip_score_client:
+            self.clip_score_client = self.client.get_clip_score_client()
+        return self.clip_score_client.compute_score(request)
+
     def get_toxicity_scores(self, auth: Authentication, request: PerspectiveAPIRequest) -> PerspectiveAPIRequestResult:
         @retry_request
         def get_toxicity_scores_with_retry(request: PerspectiveAPIRequest) -> PerspectiveAPIRequestResult:
@@ -122,6 +174,14 @@ class ServerService(Service):
 
         self.accounts.authenticate(auth)
         return get_toxicity_scores_with_retry(request)
+
+    def get_moderation_results(self, auth: Authentication, request: ModerationAPIRequest) -> ModerationAPIRequestResult:
+        @retry_request
+        def get_moderation_results_with_retry(request: ModerationAPIRequest) -> ModerationAPIRequestResult:
+            return self.moderation_api_client.get_moderation_results(request)
+
+        self.accounts.authenticate(auth)
+        return get_moderation_results_with_retry(request)
 
     def make_critique_request(self, auth: Authentication, request: CritiqueRequest) -> CritiqueRequestResult:
         self.accounts.authenticate(auth)
