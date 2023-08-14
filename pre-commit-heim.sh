@@ -12,6 +12,7 @@ if [[ $OSTYPE != 'darwin'* ]]; then
 fi
 
 # For CogView2, manually install apex and Image-Local-Attention. NOTE: need to run this on a GPU machine
+echo "Installing CogView2 dependencies..."
 if (nvcc --version > /dev/null 2>&1); then
     ROOT=`exec pwd`
     mkdir -p tmp && chmod -R 777 tmp && rm -r tmp
