@@ -216,7 +216,6 @@ tensorstore==0.1.41
 termcolor==2.2.0
 thinc==8.1.12
 threadpoolctl==3.2.0
-tifffile==2023.8.12
 timm==0.6.13
 tokenizers==0.13.3
 tomli==2.0.1
