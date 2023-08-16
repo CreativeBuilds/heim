@@ -57,7 +57,7 @@ jobs:
           VERSION: ${{ github.head_ref || 'main' }}
       - name: Run entire pipeline quickly without any data
         # Checking the HEIM RunSpecs with openai/dalle-2 should be comprehensive enough
-        run: source venv/bin/activate && helm-run --suite test -m 100 --conf-paths src/helm/benchmark/presentation/run_specs_heim.conf --skip-instances --models-to-run openai/dalle-2 --exit-on-error
+        run: source venv/bin/activate && helm-run --suite test -m 10 --conf-paths src/helm/benchmark/presentation/run_specs_heim.conf --skip-instances --models-to-run openai/dalle-2 --exit-on-error
 
   ci:
     name: All CI tasks complete

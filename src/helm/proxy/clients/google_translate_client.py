@@ -1,3 +1,5 @@
+from typing import Optional
+
 from google.cloud import translate_v2 as translate
 
 from helm.common.cache import Cache, SqliteCacheConfig
@@ -12,11 +14,14 @@ class GoogleTranslateClient:
     """
 
     def __init__(self, cache_path: str = "prod_env/cache/google_translate.sqlite"):
-        self.translate_client = translate.Client()
+        self.translate_client: Optional[translate.Client] = None
         self.cache = Cache(SqliteCacheConfig(cache_path))
 
     def translate(self, text: str, target_language: str) -> str:
         def do_it():
+            if self.translate_client is None:
+                self.translate_client = translate.Client()
+
             result = self.translate_client.translate(text, target_language=target_language)
             del result["input"]
             assert "translatedText" in result, f"Invalid response: {result}"
