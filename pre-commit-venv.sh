@@ -11,4 +11,4 @@ fi
 
 source venv/bin/activate
 
-./pre-commit-heim.sh
+./pre-commit.sh
