@@ -1,6 +1,6 @@
 # Adding new models
 
-Currently, you must clone the HELM repostory and modify the HELM code locally to add a new model.
+Currently, you must clone the HELM repository and modify the HELM code locally to add a new model.
 
 1. Pick a new organization name that does not conflict with any of the organizations for the [existing models](models.md).
 2. Define a new [`Model`](https://github.com/stanford-crfm/helm/blob/v0.2.0/src/helm/proxy/models.py#L39) describing your model and add it to [`ALL_MODELS` in `helm.proxy.models`](https://github.com/stanford-crfm/helm/blob/main/src/helm/proxy/models.py#L88). Set `Model.group` and `Model.creator_organization` to your organization name. Set `Model.name` to  `"your_organization_name/your_model_name"`.

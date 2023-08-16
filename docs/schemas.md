@@ -11,7 +11,7 @@ div.doc-function {
 ::: helm.benchmark.scenarios.scenario.Instance
 ::: helm.benchmark.scenarios.scenario.Reference
 ::: helm.benchmark.augmentations.perturbation_description.PerturbationDescription
-::: helm.common.request.Request
+::: helm.common.request.TextToImageRequest
 ::: helm.common.request.RequestResult
 ::: helm.benchmark.metrics.metric.PerInstanceStats
 ::: helm.benchmark.metrics.statistic.Stat

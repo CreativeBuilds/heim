@@ -4,7 +4,7 @@
    end="<!--intro-end-->"
 %}
 
-The code is [hosted on GitHub here](https://github.com/stanford-crfm/helm/).
+The code is [hosted on GitHub here](https://github.com/stanford-crfm/heim).
 
 To run the code, refer to the User Guide's chapters:
 

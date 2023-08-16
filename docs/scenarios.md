@@ -1,6 +1,6 @@
 # Scenarios
 
-::: helm.benchmark.scenarios
+::: helm.benchmark.scenarios.image_generation
     options:
         filters: ["^(?!test_).+_scenario$", "Scenario$"]
         show_submodules: true

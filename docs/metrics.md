@@ -1,6 +1,6 @@
 # Metrics
 
-::: helm.benchmark.metrics
+::: helm.benchmark.metrics.image_generation
     options:
         filters: ["^(?!test_).+_metrics$", "Metric$", "^evaluate_"]
         show_submodules: true

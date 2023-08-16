@@ -40,7 +40,7 @@ fi
 python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
 # Manually install protobuf to workaround issue: https://github.com/protocolbuffers/protobuf/issues/6550
-pip install --no-binary=protobuf protobuf==3.20.1
+pip install --no-binary=protobuf protobuf==3.20.2
 
 # Install all pinned dependencies
 pip install -r requirements-freeze.txt

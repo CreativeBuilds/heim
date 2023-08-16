@@ -1,3 +1,5 @@
+<!--intro-start-->
+
 # Holistic Evaluation of Text-To-Image Models
 
 <img src="https://github.com/stanford-crfm/helm/raw/heim/src/helm/benchmark/static/heim/images/heim-logo.png" alt=""  width="800"/>
@@ -28,5 +30,7 @@ Unlike previous evaluations that focused on alignment and quality, HEIM signific
 models across all aspects. Our results reveal that no single model excels in all aspects, with different models 
 demonstrating strengths in different aspects.
 
+<!--intro-end-->
+
 **This repository contains the code used to produce the [results on the website](https://crfm.stanford.edu/heim/latest/) 
-and paper.**
+and paper. To get started, refer to [the documentation](https://crfm-heim.readthedocs.io/).**
