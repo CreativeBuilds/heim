@@ -521,7 +521,10 @@ def get_mscoco_spec(
     if for_efficiency:
         adapter_spec = get_image_generation_adapter_spec(num_outputs=1)
         metric_specs = [
-            MetricSpec(class_name="helm.benchmark.denoised_runtime_metric.DenoisedRuntimeMetric", args={}),
+            MetricSpec(
+                class_name="helm.benchmark.metrics.image_generation.denoised_runtime_metric." "DenoisedRuntimeMetric",
+                args={},
+            ),
         ] + get_basic_metric_specs(names=[])
         run_spec_name = "mscoco_efficiency"
     elif compute_fid:
