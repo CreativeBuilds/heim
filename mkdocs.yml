@@ -1,5 +1,5 @@
-site_name: CRFM HELM
-repo_url: https://github.com/stanford-crfm/helm/
+site_name: CRFM HEIM
+repo_url: https://github.com/stanford-crfm/heim/
 edit_uri: blob/main/docs/
 theme:
   name: readthedocs

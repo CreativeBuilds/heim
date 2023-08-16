@@ -16,3 +16,4 @@ To add new models and scenarios, refer to the Developer Guide's chapters:
 
 - [Developer Setup](developer_setup.md)
 - [Code Structure](code.md)
+- [Adding new models](adding_new_models.md)

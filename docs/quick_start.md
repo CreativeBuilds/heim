@@ -16,5 +16,5 @@ helm-summarize --suite v1
 helm-server
 ```
 
-Then go to http://localhost:8000/ in your browser.
+Then go to http://localhost:8000/ in your browser to see the results and generated images.
 
