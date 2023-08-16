@@ -4,7 +4,7 @@ Run the following:
 
 ```
 # Create a run specs configuration
-echo 'entries: [{description: "mmlu:subject=philosophy,model=huggingface/gpt2", priority: 1}]' > run_specs.conf
+echo 'entries: [{description: "mscoco:model=huggingface/stable-diffusion-v1-4", priority: 1}]' > run_specs.conf
 
 # Run benchmark
 helm-run --conf-paths run_specs.conf --suite v1 --max-eval-instances 10
@@ -16,5 +16,5 @@ helm-summarize --suite v1
 helm-server
 ```
 
-Then go to http://localhost:8000/ in your browser.
+Then go to http://localhost:8000/ in your browser to see the results and generated images.
 

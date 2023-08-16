@@ -4,7 +4,7 @@
    end="<!--intro-end-->"
 %}
 
-The code is [hosted on GitHub here](https://github.com/stanford-crfm/helm/).
+The code is [hosted on GitHub here](https://github.com/stanford-crfm/heim).
 
 To run the code, refer to the User Guide's chapters:
 
@@ -16,3 +16,4 @@ To add new models and scenarios, refer to the Developer Guide's chapters:
 
 - [Developer Setup](developer_setup.md)
 - [Code Structure](code.md)
+- [Adding new models](adding_new_models.md)

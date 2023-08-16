@@ -982,7 +982,7 @@ $(function () {
 
     // TODO: update with the HEIM arxiv link
     const $paper = button('Paper', 'https://arxiv.org/abs/2211.09110');
-    const $code = button('GitHub', 'https://github.com/stanford-crfm/helm');
+    const $code = button('GitHub', 'https://github.com/stanford-crfm/heim');
     $result.append($('<div>', {class: 'col-sm-12'}).append($('<div>', {class: 'text-center'}).append([$paper,$code])));
 
     const $description = $('<div>', {class: 'col-sm-8'}).append([

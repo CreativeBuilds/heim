@@ -4,7 +4,7 @@
 
 First, create a Python virtual environment with Python version >= 3.8 and activate it.
 
-Using [Virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments):
+Using [virtualenv](https://docs.python.org/3/library/venv.html#creating-virtual-environments):
 
     # Create a virtual environment.
     # Only run this the first time.
