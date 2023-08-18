@@ -20,7 +20,7 @@ from .image_metrics_utils import gather_generated_image_locations
 
 class PhotorealismCritiqueMetric(Metric):
     """
-    Critique evaluation for evaluating how photorealistic the generated images are.
+    Critique evaluation for evaluating how photorealistic the generated images are by humans.
     """
 
     PHOTOREALISM_NAME: str = "photorealism_human"

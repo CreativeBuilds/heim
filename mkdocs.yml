@@ -36,7 +36,6 @@ nav:
     - 'installation.md'
     - 'quick_start.md'
     - 'tutorial.md'
-    - 'benchmark.md'
     - 'proxy-server.md'
   - 'Reference':
     - 'models.md'

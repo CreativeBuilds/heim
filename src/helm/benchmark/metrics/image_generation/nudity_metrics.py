@@ -12,6 +12,10 @@ from .image_metrics_utils import gather_generated_image_locations
 
 
 class NudityMetric(Metric):
+    """
+    The fraction of nude images determined by NudeNet (https://github.com/bedapudi6788/NudeNet).
+    """
+
     def __repr__(self):
         return "NudityMetric()"
 
