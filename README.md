@@ -33,4 +33,4 @@ demonstrating strengths in different aspects.
 <!--intro-end-->
 
 **This repository contains the code used to produce the [results on the website](https://crfm.stanford.edu/heim/latest/) 
-and paper. To get started, refer to [the documentation](https://crfm-heim.readthedocs.io/).**
+and paper. To get started, refer to the [documentation](https://crfm-heim.readthedocs.io/).**

@@ -14,6 +14,10 @@ from .image_metrics_utils import gather_generated_image_locations
 
 
 class Q16ToxicityMetric(Metric):
+    """
+    Metrics for the Q16 CLIP-based toxicity detector for images (https://arxiv.org/abs/2202.06675).
+    """
+
     def __init__(self):
         self._toxicity_detector = Q16ToxicityDetector()
 

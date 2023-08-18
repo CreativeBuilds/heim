@@ -136,19 +136,19 @@ models:
   # Models to add in the future
   - name: adobe/firefly
     display_name: Firefly
-    description: Adobe Firefly was trained on the Adobe Stock dataset, along with openly licensed work and public domain content where copyright has expired ([website](https://www.adobe.com/sensei/generative-ai/firefly.html)).
+    description: Adobe Firefly was trained on the Adobe Stock dataset, along with openly licensed work and public domain content where copyright has expired ([website](https://www.adobe.com/sensei/generative-ai/firefly.html)). Results coming soon.
     creator_organization: Adobe
     access: limited
     todo: true
   - name: dreamstudio/stable-diffusion-xl
     display_name: Stable Diffusion XL
-    description: Stable Diffusion XL allows to create descriptive images with shorter prompts and generate words within images. It is currently in beta on DreamStudio and other leading imaging applications. Like all of Stability AI’s foundation models, Stable Diffusion XL will be released as open source for optimal accessibility in the near future ([website](https://stability.ai/stablediffusion)).
+    description: Stable Diffusion XL allows to create descriptive images with shorter prompts and generate words within images. It is currently in beta on DreamStudio and other leading imaging applications. Like all of Stability AI’s foundation models, Stable Diffusion XL will be released as open source for optimal accessibility in the near future ([website](https://stability.ai/stablediffusion)). Results coming soon.
     creator_organization: Stability AI
     access: limited
     todo: true
   - name: midjourney/midjourney
     display_name: Midjourney
-    description:  Midjourney is an image generation model that produces artistic and highly imaginative images from text prompts ([website](https://www.midjourney.com/home)).
+    description:  Midjourney is an image generation model that produces artistic and highly imaginative images from text prompts ([website](https://www.midjourney.com/home)). Results coming soon.
     creator_organization: Midjourney
     access: limited
     todo: true

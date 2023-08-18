@@ -14,7 +14,8 @@ from .watermark.watermark_detector import WatermarkDetector
 
 class WatermarkMetric(Metric):
     """
-    Defines metrics for detecting watermarks in images.
+    Defines metrics for detecting watermarks in images using the
+    LAION's watermark detector (https://github.com/LAION-AI/LAION-5B-WatermarkDetection).
     """
 
     def __init__(self):

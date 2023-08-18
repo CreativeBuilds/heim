@@ -14,6 +14,11 @@ from .image_metrics_utils import gather_generated_image_locations
 
 
 class AestheticsMetric(Metric):
+    """
+    Defines metrics for LAION's CLIP-based aesthetics predictor for images
+    (https://github.com/LAION-AI/aesthetic-predictor).
+    """
+
     def __init__(self):
         self._aesthetics_scorer: Optional[AestheticsScorer] = None
 

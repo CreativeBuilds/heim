@@ -983,7 +983,8 @@ $(function () {
     // TODO: update with the HEIM arxiv link
     const $paper = button('Paper', 'https://arxiv.org/abs/2211.09110');
     const $code = button('GitHub', 'https://github.com/stanford-crfm/heim');
-    $result.append($('<div>', {class: 'col-sm-12'}).append($('<div>', {class: 'text-center'}).append([$paper,$code])));
+    const $documentation = button('Documentation', 'https://crfm-heim.readthedocs.io');
+    $result.append($('<div>', {class: 'col-sm-12'}).append($('<div>', {class: 'text-center'}).append([$paper,$code,$documentation])));
 
     const $description = $('<div>', {class: 'col-sm-8'}).append([
       '<p>Significant effort has recently been made in developing text-to-image generation models, which take textual prompts as input and generate images. As these models are widely used in real-world applications, there is an urgent need to comprehensively understand their capabilities and risks. However, existing evaluations primarily focus on image-text alignment and image quality. To address this limitation, we introduce a new benchmark, <u>Holistic Evaluation of Text-To-Image Models (HEIM).</u></p>',
